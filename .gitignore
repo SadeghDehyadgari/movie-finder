@@ -1,0 +1,13 @@
+# Custom config file (contains keys/secrets)
+config.js
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor settings
+.vscode/
+.idea/

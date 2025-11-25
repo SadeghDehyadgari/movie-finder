@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Finder - IMDb Clone</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/css/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">
+          <img src="assets/images/pngwing.com.png" alt="IMDb Logo" />
+        </div>
+
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Search IMDb" />
+          <button class="search-icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke="#797979" stroke-width="2" />
+              <path
+                d="m21 21-4.35-4.35"
+                stroke="#797979"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <div class="search-dropdown">
+            <div class="search-dropdown-content" role="listbox"></div>
+          </div>
+        </div>
+
+        <div class="dropdown-container genres-dropdown">
+          <button class="dropdown-btn">
+            <span>Genres</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path
+                d="m6 9 6 6 6-6"
+                stroke="#ffffff"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div class="dropdown-menu genres-menu"></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="hero-slider" id="heroSlider">
+      <div class="slide active">
+        <div class="slide-content">
+          <h1 class="movie-title-hero">Dune: Part Two</h1>
+          <div class="movie-genres-hero">
+            <span class="genre-pill">Action</span>
+            <span class="genre-pill">Adventure</span>
+            <span class="genre-pill">Drama</span>
+          </div>
+          <p class="movie-description">
+            Paul Atreides unites with Chani and the Fremen while seeking revenge
+            against the conspirators who destroyed his family.
+          </p>
+          <div class="theater-badge">In Theaters</div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-content">
+          <h1 class="movie-title-hero">Inception</h1>
+          <div class="movie-genres-hero">
+            <span class="genre-pill">Sci-Fi</span>
+            <span class="genre-pill">Thriller</span>
+          </div>
+          <p class="movie-description">
+            A thief who steals corporate secrets through the use of
+            dream-sharing technology is given the inverse task of planting an
+            idea.
+          </p>
+          <div class="theater-badge">In Theaters</div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-content">
+          <h1 class="movie-title-hero">Avatar: The Way of Water</h1>
+          <div class="movie-genres-hero">
+            <span class="genre-pill">Sci-Fi</span>
+            <span class="genre-pill">Adventure</span>
+            <span class="genre-pill">Fantasy</span>
+          </div>
+          <p class="movie-description">
+            Jake Sully lives with his newfound family formed on the planet of
+            Pandora.
+          </p>
+          <div class="theater-badge">In Theaters</div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-content">
+          <h1 class="movie-title-hero">The Dark Knight</h1>
+          <div class="movie-genres-hero">
+            <span class="genre-pill">Action</span>
+            <span class="genre-pill">Crime</span>
+            <span class="genre-pill">Drama</span>
+          </div>
+          <p class="movie-description">
+            When the menace known as the Joker wreaks havoc and chaos on the
+            people of Gotham.
+          </p>
+          <div class="theater-badge">Classic</div>
+        </div>
+      </div>
+
+      <div class="slide">
+        <div class="slide-content">
+          <h1 class="movie-title-hero">Spider-Man: No Way Home</h1>
+          <div class="movie-genres-hero">
+            <span class="genre-pill">Action</span>
+            <span class="genre-pill">Adventure</span>
+            <span class="genre-pill">Fantasy</span>
+          </div>
+          <p class="movie-description">
+            With Spider-Man's identity now revealed, Peter asks Doctor Strange
+            for help.
+          </p>
+          <div class="theater-badge">In Theaters</div>
+        </div>
+      </div>
+
+      <div class="slider-bullets">
+        <button class="bullet active" data-slide="0"></button>
+        <button class="bullet" data-slide="1"></button>
+        <button class="bullet" data-slide="2"></button>
+        <button class="bullet" data-slide="3"></button>
+        <button class="bullet" data-slide="4"></button>
+      </div>
+    </section>
+
+    <main class="main-content">
+      <div class="section-header">
+        <div class="section-header-left">
+          <h2 class="section-title" id="sectionTitle">Popular Movies</h2>
+          <span
+            class="results-count"
+            id="resultsCount"
+            style="display: none"
+          ></span>
+        </div>
+        <button
+          class="clear-search-btn"
+          id="clearSearchBtn"
+          style="display: none"
+        >
+          Clear Search
+        </button>
+      </div>
+      <section class="movies-section">
+        <div class="movie-grid"></div>
+        <nav class="pagination" aria-label="Movie pages"></nav>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <span class="copyright-icon">&copy;</span>
+        <span>2025 by Sadegh Dehyadgari</span>
+      </div>
+    </footer>
+
+    <script type="module" src="src/js/config.js"></script>
+    <script type="module" src="src/js/main.js"></script>
+  </body>
+</html>
