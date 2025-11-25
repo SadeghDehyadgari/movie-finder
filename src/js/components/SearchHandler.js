@@ -8,6 +8,7 @@ export class SearchHandler {
     this.sectionTitle = document.getElementById("sectionTitle");
     this.resultsCount = document.getElementById("resultsCount");
     this.heroSlider = document.getElementById("heroSlider");
+    this.mainContent = document.querySelector(".main-content");
     this.movieGrid = movieGrid;
     this.pagination = pagination;
     this.tmdbService = new TMDbService();
@@ -156,22 +157,23 @@ export class SearchHandler {
     this.addToSearchHistory(query);
     this.movieGrid.showLoading();
 
-    // Hide hero slider for search results
     if (this.heroSlider) {
-      this.heroSlider.classList.add("hidden");
-      document.querySelector(".main-content").style.paddingTop = "150px";
+      this.heroSlider.style.display = "none";
     }
 
-    // Smooth scroll to top
+    if (this.mainContent) {
+      this.mainContent.style.marginTop = "0";
+      this.mainContent.style.paddingTop = "90px";
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     try {
       const result = await this.tmdbService.searchMovies(query, page);
       this.handleSearchResults(result);
-      this.updateSectionTitle(`Results for: "${query}"`);
-      // Show results count
+      this.updateSectionTitle(`Results for: ${query}`);
       if (this.resultsCount && result.totalResults !== undefined) {
-        this.resultsCount.textContent = `${result.totalResults} results`;
+        this.resultsCount.textContent = `${result.totalResults} titles`;
         this.resultsCount.style.display = "inline";
       }
     } catch (error) {
@@ -213,14 +215,16 @@ export class SearchHandler {
         this.movieGrid.itemsPerPage,
         page
       );
-      this.updateSectionTitle("Popular Movies");
-      // Hide results count and show hero
+      this.updateSectionTitle("");
       if (this.resultsCount) {
         this.resultsCount.style.display = "none";
       }
       if (this.heroSlider) {
-        this.heroSlider.classList.remove("hidden");
-        document.querySelector(".main-content").style.paddingTop = "0";
+        this.heroSlider.style.display = "block";
+      }
+      if (this.mainContent) {
+        this.mainContent.style.marginTop = "";
+        this.mainContent.style.paddingTop = "";
       }
     } catch (error) {
       this.movieGrid.showError("Failed to load movies. Please try again.");
@@ -235,13 +239,13 @@ export class SearchHandler {
     this.pagination.currentPage = 1;
     this.hideSearchDropdown();
 
-    // Show hero slider and reset padding
     if (this.heroSlider) {
-      this.heroSlider.classList.remove("hidden");
-      document.querySelector(".main-content").style.paddingTop = "0";
+      this.heroSlider.style.display = "block";
     }
-
-    // Hide results count
+    if (this.mainContent) {
+      this.mainContent.style.marginTop = "";
+      this.mainContent.style.paddingTop = "";
+    }
     if (this.resultsCount) {
       this.resultsCount.style.display = "none";
     }

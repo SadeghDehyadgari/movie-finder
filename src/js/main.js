@@ -11,19 +11,30 @@ const searchHandler = new SearchHandler(movieGrid, pagination);
 document.addEventListener("DOMContentLoaded", async () => {
   const genresDropdown = document.querySelector(".genres-dropdown");
   const genresMenu = document.querySelector(".genres-menu");
+  const dropdownBtn = genresDropdown.querySelector(".dropdown-btn");
 
   if (genresDropdown && genresMenu) {
     await initializeGenres();
 
-    const dropdownBtn = genresDropdown.querySelector(".dropdown-btn");
-    dropdownBtn.addEventListener("click", () => {
+    dropdownBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       genresMenu.classList.toggle("active");
+      dropdownBtn.classList.toggle("active");
     });
 
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".genres-dropdown")) {
         genresMenu.classList.remove("active");
+        dropdownBtn.classList.remove("active");
       }
+    });
+  }
+
+  const clearSearchBtn = document.getElementById("clearSearchBtn");
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener("click", () => {
+      searchHandler.clearSearch();
+      clearSearchBtn.style.display = "none";
     });
   }
 });
@@ -57,7 +68,19 @@ async function initializeGenres() {
           "sectionTitle"
         ).textContent = `${genreName} Movies`;
         document.getElementById("clearSearchBtn").style.display = "block";
+
+        const heroSlider = document.getElementById("heroSlider");
+        if (heroSlider) {
+          heroSlider.style.display = "none";
+        }
+        const mainContent = document.querySelector(".main-content");
+        if (mainContent) {
+          mainContent.style.marginTop = "0";
+          mainContent.style.paddingTop = "90px";
+        }
+
         genresMenu.classList.remove("active");
+        document.querySelector(".dropdown-btn").classList.remove("active");
       }
     });
   } catch (error) {

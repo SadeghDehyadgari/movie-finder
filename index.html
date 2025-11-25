@@ -40,7 +40,13 @@
         <div class="dropdown-container genres-dropdown">
           <button class="dropdown-btn">
             <span>Genres</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <svg
+              class="dropdown-arrow"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
               <path
                 d="m6 9 6 6 6-6"
                 stroke="#ffffff"
@@ -147,21 +153,12 @@
 
     <main class="main-content">
       <div class="section-header">
-        <div class="section-header-left">
-          <h2 class="section-title" id="sectionTitle">Popular Movies</h2>
-          <span
-            class="results-count"
-            id="resultsCount"
-            style="display: none"
-          ></span>
-        </div>
-        <button
-          class="clear-search-btn"
-          id="clearSearchBtn"
+        <h2 class="section-title" id="sectionTitle"></h2>
+        <span
+          class="results-count"
+          id="resultsCount"
           style="display: none"
-        >
-          Clear Search
-        </button>
+        ></span>
       </div>
       <section class="movies-section">
         <div class="movie-grid"></div>
