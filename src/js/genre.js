@@ -1,6 +1,7 @@
 import { MovieGrid } from "./components/MovieGrid.js";
 import { Pagination } from "./components/Pagination.js";
 import { TMDbService } from "./api/tmdbService.js";
+import { SearchHandler } from "./components/SearchHandler.js";
 
 class GenrePage {
   constructor() {
@@ -71,10 +72,8 @@ class GenrePage {
 
     console.log("Rendering genre sidebar with", genres.length, "genres");
 
-    // پیدا کردن ID واقعی برای ژانر فعلی
     let currentGenreId = this.genreId;
     if (isNaN(this.genreId)) {
-      // اگر genreId نام ژانر است، ID واقعی را پیدا کن
       currentGenreId = this.tmdbService.getGenreIdByName(this.genreName);
     }
 
@@ -91,7 +90,6 @@ class GenrePage {
       })
       .join("");
 
-    // آپدیت genreId با ID واقعی
     if (currentGenreId && this.genreId !== currentGenreId) {
       this.genreId = currentGenreId;
     }
@@ -161,6 +159,167 @@ class GenrePage {
     }
   }
 
+  setupSearchHandler() {
+    const searchInput = document.querySelector(".search-input");
+    const searchButton = document.querySelector(".search-icon-btn");
+
+    if (!searchInput || !searchButton) {
+      console.error("Search elements not found in genre page");
+      return;
+    }
+
+    // ایجاد dropdown container اگر وجود ندارد
+    let searchDropdown = document.querySelector(".search-dropdown");
+    if (!searchDropdown) {
+      searchDropdown = document.createElement("div");
+      searchDropdown.className = "search-dropdown";
+      searchDropdown.innerHTML =
+        '<div class="search-dropdown-content" role="listbox"></div>';
+      document.querySelector(".search-container").appendChild(searchDropdown);
+    }
+
+    const searchDropdownContent = searchDropdown.querySelector(
+      ".search-dropdown-content"
+    );
+
+    // اضافه کردن event listeners برای جستجو
+    this.setupSearchEvents(
+      searchInput,
+      searchButton,
+      searchDropdown,
+      searchDropdownContent
+    );
+  }
+
+  setupSearchEvents(
+    searchInput,
+    searchButton,
+    searchDropdown,
+    searchDropdownContent
+  ) {
+    let searchDelayTimer = null;
+
+    // Event listener برای تایپ کردن
+    searchInput.addEventListener("input", (e) => {
+      const query = e.target.value.trim();
+
+      if (this.searchDelayTimer) clearTimeout(this.searchDelayTimer);
+
+      if (query.length >= 2) {
+        this.searchDelayTimer = setTimeout(() => {
+          this.showSearchDropdown(query, searchDropdownContent);
+        }, 300);
+      } else {
+        this.hideSearchDropdown(searchDropdown);
+      }
+    });
+
+    // Event listener برای دکمه Enter
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        const query = searchInput.value.trim();
+        if (query.length >= 2) {
+          this.hideSearchDropdown(searchDropdown);
+          // ریدایرکت به صفحه نتایج جستجو
+          window.location.href = `results.html?search=${encodeURIComponent(
+            query
+          )}`;
+        }
+      }
+    });
+
+    // Event listener برای کلیک روی دکمه جستجو
+    searchButton.addEventListener("click", () => {
+      const query = searchInput.value.trim();
+      if (query.length >= 2) {
+        this.hideSearchDropdown(searchDropdown);
+        // ریدایرکت به صفحه نتایج جستجو
+        window.location.href = `results.html?search=${encodeURIComponent(
+          query
+        )}`;
+      }
+    });
+
+    // Event listener برای کلیک خارج از dropdown
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".search-container")) {
+        this.hideSearchDropdown(searchDropdown);
+      }
+    });
+
+    // Event listener برای کلیک روی آیتم‌های dropdown
+    searchDropdownContent.addEventListener("click", (e) => {
+      const movieCard = e.target.closest(".dropdown-movie-card");
+      if (movieCard) {
+        const movieId = movieCard.dataset.movieId;
+        window.location.href = `details.html?id=${movieId}`;
+      }
+    });
+  }
+
+  async showSearchDropdown(query, dropdownContent) {
+    try {
+      const result = await this.tmdbService.searchMovies(query, 1);
+      this.renderSearchDropdown(result.movies.slice(0, 10), dropdownContent);
+    } catch (error) {
+      console.error("Search dropdown error:", error);
+      this.hideSearchDropdown(dropdownContent.parentElement);
+    }
+  }
+
+  renderSearchDropdown(movies, dropdownContent) {
+    if (!movies || movies.length === 0) {
+      dropdownContent.innerHTML =
+        '<div class="dropdown-empty">No results found</div>';
+    } else {
+      dropdownContent.innerHTML = movies
+        .map((movie) => {
+          const genresDisplay =
+            movie.genres && movie.genres.length > 0
+              ? movie.genres.slice(0, 3).join(" / ")
+              : "";
+
+          return `
+          <div class="dropdown-movie-card" 
+               data-movie-id="${movie.id}" 
+               role="option" 
+               tabindex="0"
+               aria-label="${this.escapeHTML(movie.title)}">
+            <img src="${movie.poster}" alt="${
+            movie.title
+          } poster" loading="lazy" onerror="this.src='${this.tmdbService.generatePlaceholder()}'">
+            <div class="dropdown-movie-info">
+              <h4>${this.escapeHTML(movie.title)}</h4>
+              ${
+                genresDisplay
+                  ? `<div class="dropdown-movie-genres">${this.escapeHTML(
+                      genresDisplay
+                    )}</div>`
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+        })
+        .join("");
+    }
+    dropdownContent.parentElement.style.display = "block";
+  }
+
+  hideSearchDropdown(searchDropdown) {
+    if (searchDropdown) {
+      searchDropdown.style.display = "none";
+    }
+  }
+
+  setupPagination() {
+    this.pagination.onPageChange = (page) => {
+      console.log("Page changed to:", page);
+      this.loadGenreMovies(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  }
+
   showLoading() {
     const movieList = document.querySelector(".genre-movies-list");
     if (movieList) {
@@ -183,41 +342,6 @@ class GenrePage {
         </div>
       `;
     }
-  }
-
-  setupPagination() {
-    this.pagination.onPageChange = (page) => {
-      console.log("Page changed to:", page);
-      this.loadGenreMovies(page);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-  }
-
-  setupSearchHandler() {
-    const searchInput = document.querySelector(".search-input");
-    const searchButton = document.querySelector(".search-icon-btn");
-
-    if (!searchInput || !searchButton) {
-      console.error("Search elements not found");
-      return;
-    }
-
-    const performSearch = () => {
-      const query = searchInput.value.trim();
-      if (query.length >= 2) {
-        window.location.href = `../../index.html?search=${encodeURIComponent(
-          query
-        )}`;
-      }
-    };
-
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        performSearch();
-      }
-    });
-
-    searchButton.addEventListener("click", performSearch);
   }
 
   async setupGenresDropdown() {
@@ -265,6 +389,12 @@ class GenrePage {
     } catch (error) {
       console.error("Failed to load genres dropdown:", error);
     }
+  }
+
+  escapeHTML(str) {
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
   }
 }
 
