@@ -898,22 +898,22 @@
     font-weight: 800;
   }
 
-  .movie-votes {
+  .genre-movie-votes {
     color: var(--text-secondary);
     font-size: 0.9rem;
   }
 
-  .movie-votes strong {
+  .genre-movie-votes strong {
     color: var(--text-secondary);
     font-weight: 800;
   }
 
-  .movie-rating-badge {
+  .genre-movie-rating-badge {
     display: flex;
     align-items: center;
-    gap: 8px;
-    height: 30px;
+    gap: 4px;
     min-width: 80px;
+    height: 50px;
   }
 
   .star-rating {
@@ -922,15 +922,15 @@
     gap: 4px;
   }
 
-  .rating-score {
+  .genre-rating-score {
     color: var(--text-primary);
     font-weight: 600;
     font-size: 1.1rem;
   }
 
-  .rating-count {
+  .genre-rating-count {
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 0.9rem;
   }
 
   .genre-content .pagination {

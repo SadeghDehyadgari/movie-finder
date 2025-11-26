@@ -106,6 +106,8 @@ export class MovieGrid {
         ? movie.cast.slice(0, 3).join(", ")
         : "Not Available";
     const votes = movie.voteCount ? movie.voteCount.toLocaleString() : "0";
+    const runtime = movie.runtime ? this.formatRuntime(movie.runtime) : "N/A";
+    const certification = movie.certification || "Not Rated";
 
     article.innerHTML = `
       <div class="movie-poster-container">
@@ -130,9 +132,9 @@ export class MovieGrid {
         <div class="movie-meta-line">
           <span class="movie-year">${yearDisplay}</span>
           <span class="meta-separator">•</span>
-          <span class="movie-rating">PG-13</span>
+          <span class="genre-movie-rating">${certification}</span>
           <span class="meta-separator">•</span>
-          <span class="movie-duration">2h 32m</span>
+          <span class="genre-movie-duration">${runtime}</span>
         </div>
 
         <div class="movie-genres-list">
@@ -152,12 +154,10 @@ export class MovieGrid {
           </div>
         </div>
 
-        <div class="movie-votes"><strong>Votes:</strong> ${this.escapeHTML(
-          votes
-        )}</div>
+        <div class="genre-movie-votes"><strong>Votes:</strong> ${votes}</div>
       </div>
 
-      <div class="movie-rating-badge">
+      <div class="genre-movie-rating-badge">
         <div class="star-rating">
           <svg
             class="star-icon"
@@ -170,13 +170,32 @@ export class MovieGrid {
               fill="#f5c518"
             />
           </svg>
-          <span class="rating-score">${ratingDisplay}</span>
+          <span class="genre-rating-score">${ratingDisplay}</span>
         </div>
-        <div class="rating-count">(2.9M)</div>
+        <div class="genre-rating-count">(${this.formatVoteCount(
+          movie.voteCount
+        )})</div>
       </div>
     `;
 
     return article;
+  }
+
+  formatRuntime(minutes) {
+    if (!minutes || minutes === 0) return "N/A";
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
+  }
+
+  formatVoteCount(voteCount) {
+    if (!voteCount) return "0";
+    if (voteCount >= 1000000) {
+      return (voteCount / 1000000).toFixed(1) + "M";
+    } else if (voteCount >= 1000) {
+      return (voteCount / 1000).toFixed(1) + "K";
+    }
+    return voteCount.toString();
   }
 
   showLoading() {

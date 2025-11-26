@@ -87,7 +87,43 @@ export class TMDbService {
     }
   }
 
-  transformMovieData(data, useGenreIds = false, director = null, cast = []) {
+  async getMovieCertification(movieId) {
+    try {
+      const data = await this.makeRequest(`movie/${movieId}/release_dates`);
+
+      // پیدا کردن رده‌بندی سنی برای آمریکا (US)
+      const usReleases = data.results.find(
+        (result) => result.iso_3166_1 === "US"
+      );
+      if (usReleases && usReleases.release_dates.length > 0) {
+        const certification = usReleases.release_dates[0].certification;
+        return certification || "Not Rated";
+      }
+
+      // اگر برای آمریکا پیدا نشد، اولین رده‌بندی موجود را برمی‌گردانیم
+      for (const result of data.results) {
+        if (
+          result.release_dates.length > 0 &&
+          result.release_dates[0].certification
+        ) {
+          return result.release_dates[0].certification;
+        }
+      }
+
+      return "Not Rated";
+    } catch (error) {
+      console.error(`Failed to get certification for movie ${movieId}:`, error);
+      return "Not Rated";
+    }
+  }
+
+  transformMovieData(
+    data,
+    useGenreIds = false,
+    director = null,
+    cast = [],
+    certification = null
+  ) {
     let genres = [];
 
     if (data.genres && data.genres.length > 0) {
@@ -119,6 +155,8 @@ export class TMDbService {
       voteCount: data.vote_count || 0,
       director: director,
       cast: cast,
+      runtime: data.runtime || null,
+      certification: certification || "Not Rated",
     };
   }
 
@@ -155,22 +193,55 @@ export class TMDbService {
     try {
       await this.initializeGenres();
 
+      // دریافت لیست اولیه فیلم‌ها
       const data = await this.makeRequest("discover/movie", {
         with_genres: genreId,
         language: "en-US",
         page: page,
         sort_by: "vote_average.desc",
+        "vote_count.gte": 50,
+        "vote_average.gte": 5.0,
       });
 
-      const movies = [];
-      for (const movieData of data.results) {
-        const credits = await this.getMovieCredits(movieData.id);
-        const director =
-          credits.crew.find((person) => person.job === "Director")?.name ||
-          null;
-        const cast = credits.cast.slice(0, 3).map((actor) => actor.name);
+      const filteredResults = data.results.filter(
+        (movie) => movie.vote_count >= 50 && movie.vote_average >= 5.0
+      );
 
-        movies.push(this.transformMovieData(movieData, true, director, cast));
+      const movies = [];
+      for (const movieData of filteredResults) {
+        try {
+          // درخواست ترکیبی برای دریافت جزئیات، اطلاعات کارکنان و certification در یک call
+          const [movieDetails, credits] = await Promise.all([
+            this.makeRequest(`movie/${movieData.id}`, {
+              language: "en-US",
+              append_to_response: "release_dates", // درخواست همراه با اطلاعات رده سنی
+            }),
+            this.getMovieCredits(movieData.id),
+          ]);
+
+          const director =
+            credits.crew.find((person) => person.job === "Director")?.name ||
+            null;
+          const cast = credits.cast.slice(0, 3).map((actor) => actor.name);
+
+          // استخراج رده سنی از داده‌های release_dates
+          const certification = this.extractCertification(
+            movieDetails.release_dates
+          );
+
+          const movie = this.transformMovieData(
+            { ...movieData, runtime: movieDetails.runtime },
+            true,
+            director,
+            cast,
+            certification
+          );
+          movies.push(movie);
+        } catch (error) {
+          console.error(`Failed to process movie ${movieData.id}:`, error);
+          const movie = this.transformMovieData(movieData, true);
+          movies.push(movie);
+        }
       }
 
       return {
@@ -183,6 +254,19 @@ export class TMDbService {
       console.error("Failed to get movies by genre:", error);
       throw error;
     }
+  }
+
+  // تابع کمکی برای استخراج رده سنی
+  extractCertification(releaseDatesData) {
+    if (!releaseDatesData || !releaseDatesData.results) return "Not Rated";
+
+    const usReleases = releaseDatesData.results.find(
+      (result) => result.iso_3166_1 === "US"
+    );
+    if (usReleases && usReleases.release_dates.length > 0) {
+      return usReleases.release_dates[0].certification || "Not Rated";
+    }
+    return "Not Rated";
   }
 
   async getMovieCredits(movieId) {
