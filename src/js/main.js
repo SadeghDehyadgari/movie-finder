@@ -30,11 +30,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  const clearSearchBtn = document.getElementById("clearSearchBtn");
-  if (clearSearchBtn) {
-    clearSearchBtn.addEventListener("click", () => {
-      searchHandler.clearSearch();
-      clearSearchBtn.style.display = "none";
+  const searchInput = document.querySelector(".search-input");
+  const searchButton = document.querySelector(".search-icon-btn");
+
+  if (searchInput && searchButton) {
+    searchInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        const query = searchInput.value.trim();
+        if (query.length >= 2) {
+          searchHandler.hideSearchDropdown();
+          window.location.href = `src/pages/results.html?search=${encodeURIComponent(
+            query
+          )}`;
+        }
+      }
+    });
+
+    searchButton.addEventListener("click", () => {
+      const query = searchInput.value.trim();
+      if (query.length >= 2) {
+        searchHandler.hideSearchDropdown();
+        window.location.href = `src/pages/results.html?search=${encodeURIComponent(
+          query
+        )}`;
+      }
     });
   }
 });

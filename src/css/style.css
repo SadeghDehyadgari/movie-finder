@@ -384,6 +384,7 @@
   .theater-badge {
     font-weight: bold;
     text-align: left;
+    margin-top: 1.5rem;
   }
 
   .slider-bullets {
@@ -982,5 +983,11 @@
 
   .genre-content .page-btn:disabled:hover {
     background: transparent;
+  }
+}
+
+@layer results-page {
+  .results-header {
+    position: static;
   }
 }
