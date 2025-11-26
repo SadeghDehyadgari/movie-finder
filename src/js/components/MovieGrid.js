@@ -4,6 +4,7 @@ export class MovieGrid {
     this.movies = [];
     this.currentPage = 1;
     this.itemsPerPage = 20;
+    this.isGenreLayout = containerSelector === ".genre-movies-list";
 
     if (this.container) {
       this.init();
@@ -12,40 +13,36 @@ export class MovieGrid {
 
   init() {}
 
-  getMoviesForCurrentPage() {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.movies.slice(startIndex, endIndex);
-  }
-
   renderMovies(moviesData) {
     if (!this.container) return;
 
     this.movies = moviesData;
-    this.currentPage = 1;
-    this.renderCurrentPage();
-  }
-
-  renderCurrentPage() {
-    if (!this.container) return;
-
-    const currentPageMovies = this.getMoviesForCurrentPage();
     this.container.innerHTML = "";
 
-    if (currentPageMovies.length === 0) {
+    if (this.movies.length === 0) {
       this.showEmptyState();
       return;
     }
 
-    currentPageMovies.forEach((movie) => {
+    if (this.isGenreLayout) {
+      this.renderGenreLayout();
+    } else {
+      this.renderGridLayout();
+    }
+  }
+
+  renderGridLayout() {
+    this.movies.forEach((movie) => {
       const movieCard = this.createMovieCard(movie);
       this.container.appendChild(movieCard);
     });
   }
 
-  goToPage(page) {
-    this.currentPage = page;
-    this.renderCurrentPage();
+  renderGenreLayout() {
+    this.movies.forEach((movie) => {
+      const movieCard = this.createGenreMovieCard(movie);
+      this.container.appendChild(movieCard);
+    });
   }
 
   createMovieCard(movie) {
@@ -73,8 +70,8 @@ export class MovieGrid {
       genresDisplay
     )}</div>
       <div class="movie-meta">
-        <svg class="star-icon" width="16" height="16" viewBox="0 0 24 24" fill="#f5c518">
-          <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.897l-7.336 3.268 1.402-8.168L.132 9.21l8.2-1.192L12 .587z"/>
+        <svg class="star-icon" width="16" height="16" viewBox="0 0 24 24">
+          <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.897l-7.336 3.268 1.402-8.168L.132 9.21l8.2-1.192L12 .587z" fill="#f5c518"/>
         </svg>
         <span class="movie-rating">${ratingDisplay}</span>
         <a href="src/pages/details.html?id=${
@@ -86,11 +83,107 @@ export class MovieGrid {
     return article;
   }
 
+  createGenreMovieCard(movie) {
+    const article = document.createElement("article");
+    article.className = "genre-movie-card";
+
+    const posterUrl = movie.poster || this.generatePlaceholder();
+    const yearDisplay = movie.year || "Unknown";
+    const ratingDisplay = movie.rating !== "N/A" ? movie.rating : "N/A";
+    const genresDisplay =
+      movie.genres && movie.genres.length > 0
+        ? movie.genres
+            .map(
+              (genre) =>
+                `<span class="movie-genre-tag">${this.escapeHTML(genre)}</span>`
+            )
+            .join("")
+        : '<span class="movie-genre-tag">Movie</span>';
+
+    const director = movie.director || "Not Available";
+    const stars =
+      movie.cast && movie.cast.length > 0
+        ? movie.cast.slice(0, 3).join(", ")
+        : "Not Available";
+    const votes = movie.voteCount ? movie.voteCount.toLocaleString() : "0";
+
+    article.innerHTML = `
+      <div class="movie-poster-container">
+        <a href="details.html?id=${movie.id}">
+          <img
+            src="${posterUrl}"
+            alt="${movie.title} Poster"
+            class="genre-movie-poster"
+            loading="lazy"
+            onerror="this.src='${this.generatePlaceholder()}'"
+          >
+        </a>
+      </div>
+
+      <div class="movie-details">
+        <h3 class="genre-movie-title">
+          <a href="details.html?id=${movie.id}">${this.escapeHTML(
+      movie.title
+    )}</a>
+        </h3>
+
+        <div class="movie-meta-line">
+          <span class="movie-year">${yearDisplay}</span>
+          <span class="meta-separator">•</span>
+          <span class="movie-rating">PG-13</span>
+          <span class="meta-separator">•</span>
+          <span class="movie-duration">2h 32m</span>
+        </div>
+
+        <div class="movie-genres-list">
+          ${genresDisplay}
+        </div>
+
+        <p class="movie-description">
+          ${this.escapeHTML(movie.plot)}
+        </p>
+
+        <div class="movie-credits">
+          <div class="credit-line">
+            <strong>Director:</strong> ${this.escapeHTML(director)}
+          </div>
+          <div class="credit-line">
+            <strong>Stars:</strong> ${this.escapeHTML(stars)}
+          </div>
+        </div>
+
+        <div class="movie-votes"><strong>Votes:</strong> ${this.escapeHTML(
+          votes
+        )}</div>
+      </div>
+
+      <div class="movie-rating-badge">
+        <div class="star-rating">
+          <svg
+            class="star-icon"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.897l-7.336 3.268 1.402-8.168L.132 9.21l8.2-1.192L12 .587z"
+              fill="#f5c518"
+            />
+          </svg>
+          <span class="rating-score">${ratingDisplay}</span>
+        </div>
+        <div class="rating-count">(2.9M)</div>
+      </div>
+    `;
+
+    return article;
+  }
+
   showLoading() {
     if (!this.container) return;
 
     this.container.innerHTML = `
-      <div class="loading-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+      <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
         <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
         <p style="margin-top: 1rem;">Loading movies...</p>
       </div>
@@ -101,7 +194,7 @@ export class MovieGrid {
     if (!this.container) return;
 
     this.container.innerHTML = `
-      <div class="error-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+      <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
         <p>${message}</p>
         <button onclick="location.reload()" style="margin-top: 1rem; padding: 8px 16px; background: var(--accent-color); color: #000; border: none; border-radius: 4px; cursor: pointer;">Try Again</button>
       </div>
@@ -112,7 +205,7 @@ export class MovieGrid {
     if (!this.container) return;
 
     this.container.innerHTML = `
-      <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+      <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
         <p>${message}</p>
       </div>
     `;

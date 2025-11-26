@@ -6,6 +6,7 @@ export class TMDbService {
     this.apiKey = CONFIG.API.API_KEY;
     this.imageBaseURL = CONFIG.API.IMAGE_BASE_URL;
     this.genresMap = null;
+    this.genresList = null;
   }
 
   async makeRequest(endpoint, params = {}) {
@@ -25,6 +26,7 @@ export class TMDbService {
 
       return await response.json();
     } catch (error) {
+      console.error("API Request failed:", error);
       throw error;
     }
   }
@@ -36,11 +38,15 @@ export class TMDbService {
           language: "en-US",
         });
         this.genresMap = {};
+        this.genresList = [];
         data.genres.forEach((genre) => {
           this.genresMap[genre.id] = genre.name;
+          this.genresList.push({ id: genre.id, name: genre.name });
         });
       } catch (error) {
+        console.error("Failed to initialize genres:", error);
         this.genresMap = {};
+        this.genresList = [];
       }
     }
   }
@@ -63,6 +69,7 @@ export class TMDbService {
         totalPages: data.total_pages,
       };
     } catch (error) {
+      console.error("Failed to get popular movies:", error);
       throw error;
     }
   }
@@ -75,11 +82,12 @@ export class TMDbService {
 
       return this.transformMovieData(data);
     } catch (error) {
+      console.error("Failed to get movie details:", error);
       throw error;
     }
   }
 
-  transformMovieData(data, useGenreIds = false) {
+  transformMovieData(data, useGenreIds = false, director = null, cast = []) {
     let genres = [];
 
     if (data.genres && data.genres.length > 0) {
@@ -108,6 +116,9 @@ export class TMDbService {
       genres: genres,
       plot: data.overview || "No description available.",
       rating: data.vote_average ? data.vote_average.toFixed(1) : "N/A",
+      voteCount: data.vote_count || 0,
+      director: director,
+      cast: cast,
     };
   }
 
@@ -131,6 +142,7 @@ export class TMDbService {
         totalPages: data.total_pages,
       };
     } catch (error) {
+      console.error("Failed to search movies:", error);
       throw error;
     }
   }
@@ -147,28 +159,61 @@ export class TMDbService {
         with_genres: genreId,
         language: "en-US",
         page: page,
-        sort_by: "popularity.desc",
+        sort_by: "vote_average.desc",
       });
 
+      const movies = [];
+      for (const movieData of data.results) {
+        const credits = await this.getMovieCredits(movieData.id);
+        const director =
+          credits.crew.find((person) => person.job === "Director")?.name ||
+          null;
+        const cast = credits.cast.slice(0, 3).map((actor) => actor.name);
+
+        movies.push(this.transformMovieData(movieData, true, director, cast));
+      }
+
       return {
-        movies: data.results.map((movie) =>
-          this.transformMovieData(movie, true)
-        ),
+        movies: movies,
         totalResults: data.total_results,
         currentPage: data.page,
         totalPages: data.total_pages,
       };
     } catch (error) {
+      console.error("Failed to get movies by genre:", error);
       throw error;
+    }
+  }
+
+  async getMovieCredits(movieId) {
+    try {
+      const data = await this.makeRequest(`movie/${movieId}/credits`);
+      return {
+        cast: data.cast || [],
+        crew: data.crew || [],
+      };
+    } catch (error) {
+      console.error(`Failed to get credits for movie ${movieId}:`, error);
+      return { cast: [], crew: [] };
     }
   }
 
   async getGenres() {
     try {
       await this.initializeGenres();
-      return Object.values(this.genresMap);
+      return this.genresList;
     } catch (error) {
+      console.error("Failed to get genres:", error);
       throw error;
     }
+  }
+
+  getGenreIdByName(genreName) {
+    if (!this.genresMap) return null;
+
+    for (const [id, name] of Object.entries(this.genresMap)) {
+      if (name === genreName) return id;
+    }
+    return null;
   }
 }

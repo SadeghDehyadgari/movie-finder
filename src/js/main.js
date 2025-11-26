@@ -11,9 +11,9 @@ const searchHandler = new SearchHandler(movieGrid, pagination);
 document.addEventListener("DOMContentLoaded", async () => {
   const genresDropdown = document.querySelector(".genres-dropdown");
   const genresMenu = document.querySelector(".genres-menu");
-  const dropdownBtn = genresDropdown.querySelector(".dropdown-btn");
+  const dropdownBtn = genresDropdown?.querySelector(".dropdown-btn");
 
-  if (genresDropdown && genresMenu) {
+  if (genresDropdown && genresMenu && dropdownBtn) {
     await initializeGenres();
 
     dropdownBtn.addEventListener("click", (e) => {
@@ -47,8 +47,8 @@ async function initializeGenres() {
     const genres = await tmdbService.getGenres();
     genresMenu.innerHTML = genres
       .map(
-        (genre, index) => `
-      <div class="genre-item" data-genre-id="${index + 1}">${genre}</div>
+        (genre) => `
+      <div class="genre-item" data-genre-id="${genre.id}">${genre.name}</div>
     `
       )
       .join("");
@@ -58,29 +58,9 @@ async function initializeGenres() {
       if (genreItem) {
         const genreId = genreItem.dataset.genreId;
         const genreName = genreItem.textContent;
-        const tmdbService = new (
-          await import("./api/tmdbService.js")
-        ).TMDbService();
-        const result = await tmdbService.getMoviesByGenre(genreId);
-        movieGrid.renderMovies(result.movies);
-        pagination.update(result.totalResults, movieGrid.itemsPerPage, 1);
-        document.getElementById(
-          "sectionTitle"
-        ).textContent = `${genreName} Movies`;
-        document.getElementById("clearSearchBtn").style.display = "block";
-
-        const heroSlider = document.getElementById("heroSlider");
-        if (heroSlider) {
-          heroSlider.style.display = "none";
-        }
-        const mainContent = document.querySelector(".main-content");
-        if (mainContent) {
-          mainContent.style.marginTop = "0";
-          mainContent.style.paddingTop = "90px";
-        }
-
-        genresMenu.classList.remove("active");
-        document.querySelector(".dropdown-btn").classList.remove("active");
+        window.location.href = `src/pages/genre.html?id=${genreId}&name=${encodeURIComponent(
+          genreName
+        )}`;
       }
     });
   } catch (error) {

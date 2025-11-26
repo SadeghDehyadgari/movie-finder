@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Genre Movies - Movie Finder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="header-container">
+        <div class="logo">
+          <a href="../../index.html">
+            <img src="../../assets/images/pngwing.com.png" alt="IMDb Logo" />
+          </a>
+        </div>
+
+        <div class="search-container">
+          <input type="text" class="search-input" placeholder="Search IMDb" />
+          <button class="search-icon-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="11" cy="11" r="8" stroke="#797979" stroke-width="2" />
+              <path
+                d="m21 21-4.35-4.35"
+                stroke="#797979"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <div class="dropdown-container genres-dropdown">
+          <button class="dropdown-btn">
+            <span>Genres</span>
+            <svg
+              class="dropdown-arrow"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="m6 9 6 6 6-6"
+                stroke="#ffffff"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <div class="dropdown-menu genres-menu"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="genre-main-content">
+      <div class="genre-page-header">
+        <div class="genre-dot"></div>
+        <h1 class="genre-main-title" id="genreTitle">Genres</h1>
+      </div>
+
+      <div class="genre-layout-container">
+        <aside class="genre-sidebar">
+          <div class="genre-list-container">
+            <!-- Dynamic content will be loaded here -->
+          </div>
+        </aside>
+
+        <section class="genre-content">
+          <div class="genre-controls">
+            <div class="sort-container">
+              <span class="sort-label">Sort by:</span>
+              <div class="sort-dropdown">
+                <span class="sort-selected">Ranking</span>
+                <div class="sort-arrows">
+                  <svg
+                    width="25"
+                    height="25"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <g stroke="#ffffff" stroke-width="1.5" fill="none">
+                      <line x1="7" y1="14" x2="7" y2="6" />
+                      <polyline points="4,9 7,6 10,9" />
+                    </g>
+
+                    <g stroke="#ffffff" stroke-width="1.5" fill="none">
+                      <line x1="13" y1="6" x2="13" y2="14" />
+                      <polyline points="10,11 13,14 16,11" />
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <div
+              class="genre-results-count"
+              id="resultsCount"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div class="genre-divider"></div>
+
+          <div class="genre-movies-list"></div>
+
+          <nav class="pagination" aria-label="Movie pages"></nav>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-content">
+        <span class="copyright-icon">&copy;</span>
+        <span>2025 by Sadegh Dehyadgari</span>
+      </div>
+    </footer>
+
+    <script type="module" src="../js/genre.js"></script>
+  </body>
+</html>
