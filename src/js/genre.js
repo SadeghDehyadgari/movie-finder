@@ -199,14 +199,13 @@ class GenrePage {
   ) {
     let searchDelayTimer = null;
 
-    // Event listener برای تایپ کردن
     searchInput.addEventListener("input", (e) => {
       const query = e.target.value.trim();
 
-      if (this.searchDelayTimer) clearTimeout(this.searchDelayTimer);
+      if (searchDelayTimer) clearTimeout(searchDelayTimer);
 
       if (query.length >= 2) {
-        this.searchDelayTimer = setTimeout(() => {
+        searchDelayTimer = setTimeout(() => {
           this.showSearchDropdown(query, searchDropdownContent);
         }, 300);
       } else {
@@ -214,13 +213,11 @@ class GenrePage {
       }
     });
 
-    // Event listener برای دکمه Enter
     searchInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         const query = searchInput.value.trim();
         if (query.length >= 2) {
           this.hideSearchDropdown(searchDropdown);
-          // ریدایرکت به صفحه نتایج جستجو
           window.location.href = `results.html?search=${encodeURIComponent(
             query
           )}`;
@@ -228,26 +225,22 @@ class GenrePage {
       }
     });
 
-    // Event listener برای کلیک روی دکمه جستجو
     searchButton.addEventListener("click", () => {
       const query = searchInput.value.trim();
       if (query.length >= 2) {
         this.hideSearchDropdown(searchDropdown);
-        // ریدایرکت به صفحه نتایج جستجو
         window.location.href = `results.html?search=${encodeURIComponent(
           query
         )}`;
       }
     });
 
-    // Event listener برای کلیک خارج از dropdown
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".search-container")) {
         this.hideSearchDropdown(searchDropdown);
       }
     });
 
-    // Event listener برای کلیک روی آیتم‌های dropdown
     searchDropdownContent.addEventListener("click", (e) => {
       const movieCard = e.target.closest(".dropdown-movie-card");
       if (movieCard) {

@@ -87,11 +87,38 @@ export class TMDbService {
     }
   }
 
+  async getMovieImages(movieId) {
+    try {
+      const data = await this.makeRequest(`movie/${movieId}/images`);
+      const backdrops = data.backdrops || [];
+      const posters = data.posters || [];
+
+      const sceneImages = [];
+
+      if (backdrops.length > 0) {
+        sceneImages.push(
+          ...backdrops
+            .slice(0, 3)
+            .map((backdrop) => `${this.imageBaseURL}w1280${backdrop.file_path}`)
+        );
+      }
+
+      while (sceneImages.length < 3 && posters.length > 0) {
+        sceneImages.push(`${this.imageBaseURL}w500${posters[0].file_path}`);
+        posters.shift();
+      }
+
+      return sceneImages;
+    } catch (error) {
+      console.error("Failed to get movie images:", error);
+      return [];
+    }
+  }
+
   async getMovieCertification(movieId) {
     try {
       const data = await this.makeRequest(`movie/${movieId}/release_dates`);
 
-      // پیدا کردن رده‌بندی سنی برای آمریکا (US)
       const usReleases = data.results.find(
         (result) => result.iso_3166_1 === "US"
       );
@@ -100,7 +127,6 @@ export class TMDbService {
         return certification || "Not Rated";
       }
 
-      // اگر برای آمریکا پیدا نشد، اولین رده‌بندی موجود را برمی‌گردانیم
       for (const result of data.results) {
         if (
           result.release_dates.length > 0 &&
@@ -193,7 +219,6 @@ export class TMDbService {
     try {
       await this.initializeGenres();
 
-      // دریافت لیست اولیه فیلم‌ها
       const data = await this.makeRequest("discover/movie", {
         with_genres: genreId,
         language: "en-US",
@@ -210,11 +235,10 @@ export class TMDbService {
       const movies = [];
       for (const movieData of filteredResults) {
         try {
-          // درخواست ترکیبی برای دریافت جزئیات، اطلاعات کارکنان و certification در یک call
           const [movieDetails, credits] = await Promise.all([
             this.makeRequest(`movie/${movieData.id}`, {
               language: "en-US",
-              append_to_response: "release_dates", // درخواست همراه با اطلاعات رده سنی
+              append_to_response: "release_dates",
             }),
             this.getMovieCredits(movieData.id),
           ]);
@@ -224,7 +248,6 @@ export class TMDbService {
             null;
           const cast = credits.cast.slice(0, 3).map((actor) => actor.name);
 
-          // استخراج رده سنی از داده‌های release_dates
           const certification = this.extractCertification(
             movieDetails.release_dates
           );
@@ -256,7 +279,6 @@ export class TMDbService {
     }
   }
 
-  // تابع کمکی برای استخراج رده سنی
   extractCertification(releaseDatesData) {
     if (!releaseDatesData || !releaseDatesData.results) return "Not Rated";
 

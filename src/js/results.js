@@ -86,12 +86,10 @@ class ResultsPage {
       return;
     }
 
-    // Set the current search query in the input
     searchInput.value = this.searchQuery;
 
     let searchDelayTimer = null;
 
-    // Event listener for typing
     searchInput.addEventListener("input", (e) => {
       const query = e.target.value.trim();
 
@@ -106,13 +104,11 @@ class ResultsPage {
       }
     });
 
-    // Event listener for Enter key
     searchInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
         const query = searchInput.value.trim();
         if (query.length >= 2) {
           this.hideSearchDropdown(searchDropdown);
-          // Redirect to results page with new search
           if (query !== this.searchQuery) {
             window.location.href = `results.html?search=${encodeURIComponent(
               query
@@ -122,12 +118,10 @@ class ResultsPage {
       }
     });
 
-    // Event listener for search button click
     searchButton.addEventListener("click", () => {
       const query = searchInput.value.trim();
       if (query.length >= 2) {
         this.hideSearchDropdown(searchDropdown);
-        // Redirect to results page with new search
         if (query !== this.searchQuery) {
           window.location.href = `results.html?search=${encodeURIComponent(
             query
@@ -136,14 +130,12 @@ class ResultsPage {
       }
     });
 
-    // Event listener for clicks outside dropdown
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".search-container")) {
         this.hideSearchDropdown(searchDropdown);
       }
     });
 
-    // Event listener for clicks on dropdown items
     searchDropdownContent.addEventListener("click", (e) => {
       const movieCard = e.target.closest(".dropdown-movie-card");
       if (movieCard) {

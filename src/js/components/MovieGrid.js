@@ -1,3 +1,5 @@
+import { PathHelper } from "../utils/pathHelper.js";
+
 export class MovieGrid {
   constructor(containerSelector) {
     this.container = document.querySelector(containerSelector);
@@ -57,6 +59,9 @@ export class MovieGrid {
         ? movie.genres.join(" / ")
         : "Movie";
 
+    // استفاده از PathHelper برای مسیر هوشمند
+    const detailsUrl = PathHelper.getDetailsPath(movie.id);
+
     article.innerHTML = `
       <img 
         class="movie-poster" 
@@ -74,9 +79,7 @@ export class MovieGrid {
           <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.168L12 18.897l-7.336 3.268 1.402-8.168L.132 9.21l8.2-1.192L12 .587z" fill="#f5c518"/>
         </svg>
         <span class="movie-rating">${ratingDisplay}</span>
-        <a href="src/pages/details.html?id=${
-          movie.id
-        }" class="view-info-link">View Info</a>
+        <a href="${detailsUrl}" class="view-info-link">View Info</a>
       </div>
     `;
 
@@ -109,9 +112,12 @@ export class MovieGrid {
     const runtime = movie.runtime ? this.formatRuntime(movie.runtime) : "N/A";
     const certification = movie.certification || "Not Rated";
 
+    // استفاده از PathHelper برای مسیر هوشمند
+    const detailsUrl = PathHelper.getDetailsPath(movie.id);
+
     article.innerHTML = `
       <div class="movie-poster-container">
-        <a href="details.html?id=${movie.id}">
+        <a href="${detailsUrl}">
           <img
             src="${posterUrl}"
             alt="${movie.title} Poster"
@@ -124,9 +130,7 @@ export class MovieGrid {
 
       <div class="movie-details">
         <h3 class="genre-movie-title">
-          <a href="details.html?id=${movie.id}">${this.escapeHTML(
-      movie.title
-    )}</a>
+          <a href="${detailsUrl}">${this.escapeHTML(movie.title)}</a>
         </h3>
 
         <div class="movie-meta-line">
