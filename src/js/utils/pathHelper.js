@@ -1,19 +1,15 @@
 export class PathHelper {
   static getDetailsPath(movieId) {
-    // تشخیص خودکار مسیر بر اساس موقعیت فعلی
     const currentPath = window.location.pathname;
 
     if (currentPath.includes("/src/pages/")) {
-      // اگر در صفحات results یا genre هستیم
       return `details.html?id=${movieId}`;
     } else if (
       currentPath.endsWith("index.html") ||
       currentPath.endsWith("/")
     ) {
-      // اگر در صفحه اصلی هستیم
       return `src/pages/details.html?id=${movieId}`;
     } else {
-      // حالت پیش‌فرض
       return `details.html?id=${movieId}`;
     }
   }
