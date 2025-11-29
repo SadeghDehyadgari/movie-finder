@@ -16,13 +16,22 @@ export class SearchHandler {
     this.isSearching = false;
     this.searchDelayTimer = null;
     this.searchHistory = [];
+    this.isMobile = window.innerWidth < 768;
     this.init();
   }
 
   init() {
     if (!this.searchInput || !this.movieGrid || !this.pagination) return;
+    this.setupMobileStyles();
     this.addEventListeners();
     this.loadPopularMovies();
+  }
+
+  setupMobileStyles() {
+    if (this.isMobile && this.searchDropdown) {
+      this.searchDropdown.parentElement.style.width = "100%";
+      this.searchDropdown.parentElement.style.left = "0";
+    }
   }
 
   addEventListeners() {
@@ -30,10 +39,12 @@ export class SearchHandler {
       const query = e.target.value.trim();
       if (this.searchDelayTimer) clearTimeout(this.searchDelayTimer);
 
+      const delay = this.isMobile ? 200 : 300;
+
       if (query.length >= 2) {
         this.searchDelayTimer = setTimeout(() => {
           this.showSearchDropdown(query);
-        }, 300);
+        }, delay);
       } else if (query.length === 0) {
         this.hideSearchDropdown();
         this.clearSearch();
@@ -95,12 +106,17 @@ export class SearchHandler {
         this.loadPopularMovies(page);
       }
     };
+
+    window.addEventListener("resize", () => {
+      this.isMobile = window.innerWidth < 768;
+      this.setupMobileStyles();
+    });
   }
 
   async showSearchDropdown(query) {
     try {
       const result = await this.tmdbService.searchMovies(query, 1);
-      this.renderSearchDropdown(result.movies.slice(0, 15));
+      this.renderSearchDropdown(result.movies.slice(0, this.isMobile ? 8 : 15));
     } catch (error) {
       this.hideSearchDropdown();
     }
@@ -115,11 +131,13 @@ export class SearchHandler {
         .map((movie) => {
           const genresDisplay =
             movie.genres && movie.genres.length > 0
-              ? movie.genres.slice(0, 3).join(" / ")
+              ? movie.genres.slice(0, 2).join(" / ")
               : "";
 
           return `
-          <div class="dropdown-movie-card" 
+          <div class="dropdown-movie-card ${
+            this.isMobile ? "mobile-card" : ""
+          }" 
                data-movie-id="${movie.id}" 
                role="option" 
                tabindex="0"

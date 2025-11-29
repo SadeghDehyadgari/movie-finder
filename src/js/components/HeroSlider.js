@@ -12,6 +12,10 @@ export class HeroSlider {
       : [];
     this.currentSlide = 0;
     this.interval = null;
+    this.originalMoviesData = [];
+    this.touchStartX = 0;
+    this.touchEndX = 0;
+    this.isMobile = window.innerWidth < 768;
 
     this.init();
   }
@@ -27,12 +31,15 @@ export class HeroSlider {
 
     this.addEventListeners();
     this.startAutoSlide();
+    this.setupResponsiveText();
+    this.setupTouchEvents();
   }
 
   async loadSlideData() {
     try {
       const popularMovies = await this.tmdbService.getPopularMovies();
-      this.updateSlidesWithData(popularMovies.movies.slice(0, 5));
+      this.originalMoviesData = popularMovies.movies.slice(0, 5);
+      this.updateSlidesWithData(this.originalMoviesData);
     } catch (error) {
       this.useDefaultSlides();
     }
@@ -69,6 +76,8 @@ export class HeroSlider {
     const rating = movie.rating || "8.0";
     const year = movie.year || "2023";
 
+    const truncatedPlot = this.truncatePlotByViewport(plot);
+
     content.innerHTML = `
       <h1 class="movie-title-hero">${this.escapeHTML(title)}</h1>
       <div class="movie-genres-hero">
@@ -79,8 +88,8 @@ export class HeroSlider {
           )
           .join("")}
       </div>
-      <p class="movie-description">
-        ${this.escapeHTML(plot)}
+      <p class="index-movie-description">
+        ${this.escapeHTML(truncatedPlot)}
       </p>
       <div class="theater-badge">
         ${year} • ⭐ ${rating}/10
@@ -88,7 +97,87 @@ export class HeroSlider {
     `;
   }
 
-  useDefaultSlides() {}
+  truncatePlotByViewport(plot) {
+    const words = plot.split(" ");
+
+    if (window.innerWidth < 768) {
+      return words.slice(0, 10).join(" ") + (words.length > 10 ? "..." : "");
+    } else if (window.innerWidth < 1024) {
+      return words.slice(0, 15).join(" ") + (words.length > 15 ? "..." : "");
+    }
+
+    return plot;
+  }
+
+  setupResponsiveText() {
+    window.addEventListener("resize", () => {
+      this.isMobile = window.innerWidth < 768;
+      if (this.originalMoviesData.length > 0) {
+        this.updateSlidesWithData(this.originalMoviesData);
+      }
+    });
+  }
+
+  setupTouchEvents() {
+    this.container.addEventListener("touchstart", (e) => {
+      this.touchStartX = e.changedTouches[0].screenX;
+      this.stopAutoSlide();
+    });
+
+    this.container.addEventListener("touchend", (e) => {
+      this.touchEndX = e.changedTouches[0].screenX;
+      this.handleSwipe();
+      this.startAutoSlide();
+    });
+
+    this.bullets.forEach((bullet, index) => {
+      bullet.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        this.stopAutoSlide();
+        this.goToSlide(index);
+        this.startAutoSlide();
+      });
+    });
+  }
+
+  handleSwipe() {
+    const swipeThreshold = 50;
+    const diff = this.touchStartX - this.touchEndX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        this.nextSlide();
+      } else {
+        const prevIndex =
+          this.currentSlide === 0
+            ? this.slides.length - 1
+            : this.currentSlide - 1;
+        this.goToSlide(prevIndex);
+      }
+    }
+  }
+
+  useDefaultSlides() {
+    this.originalMoviesData = Array.from(this.slides).map((slide) => {
+      const content = slide.querySelector(".slide-content");
+      const title =
+        content.querySelector(".movie-title-hero")?.textContent ||
+        "Unknown Movie";
+      const genrePills = content.querySelectorAll(".genre-pill");
+      const genres = Array.from(genrePills).map((pill) => pill.textContent);
+      const plot =
+        content.querySelector(".index-movie-description")?.textContent ||
+        "An exciting adventure awaits...";
+
+      return {
+        title,
+        genres,
+        plot,
+        rating: "8.0",
+        year: "2023",
+      };
+    });
+  }
 
   addEventListeners() {
     this.bullets.forEach((bullet, index) => {
@@ -117,6 +206,8 @@ export class HeroSlider {
   }
 
   startAutoSlide() {
+    if (this.isMobile) return;
+
     this.stopAutoSlide();
     this.interval = setInterval(() => {
       this.nextSlide();

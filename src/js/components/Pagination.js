@@ -4,6 +4,8 @@ export class Pagination {
     this.currentPage = 1;
     this.totalPages = 1;
     this.onPageChange = () => {};
+    this.isMobile = window.innerWidth < 768;
+    this.touchStartX = 0;
 
     if (this.container) {
       this.init();
@@ -22,6 +24,24 @@ export class Pagination {
   generatePaginationHTML() {
     const prevDisabled = this.currentPage <= 1 ? "disabled" : "";
     const nextDisabled = this.currentPage >= this.totalPages ? "disabled" : "";
+
+    if (this.isMobile) {
+      return `
+        <button class="page-btn arrow-btn mobile-btn" ${prevDisabled}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="m15 18-6-6 6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <span class="mobile-page-indicator">${this.currentPage} / ${this.totalPages}</span>
+
+        <button class="page-btn arrow-btn mobile-btn" ${nextDisabled}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="m9 18 6-6-6-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      `;
+    }
 
     return `
       <button class="page-btn arrow-btn" ${prevDisabled}>
@@ -88,6 +108,31 @@ export class Pagination {
         this.handlePageClick(button);
       }
     });
+
+    if (this.isMobile) {
+      this.container.addEventListener("touchstart", (e) => {
+        this.touchStartX = e.changedTouches[0].screenX;
+      });
+
+      this.container.addEventListener("touchend", (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        const diff = this.touchStartX - touchEndX;
+        const swipeThreshold = 50;
+
+        if (Math.abs(diff) > swipeThreshold) {
+          if (diff > 0 && this.currentPage < this.totalPages) {
+            this.goToPage(this.currentPage + 1);
+          } else if (diff < 0 && this.currentPage > 1) {
+            this.goToPage(this.currentPage - 1);
+          }
+        }
+      });
+    }
+
+    window.addEventListener("resize", () => {
+      this.isMobile = window.innerWidth < 768;
+      this.render();
+    });
   }
 
   handleArrowClick(button) {
@@ -115,7 +160,10 @@ export class Pagination {
   }
 
   update(totalItems, itemsPerPage, currentPage = 1) {
-    this.totalPages = Math.ceil(totalItems / itemsPerPage);
+    const maxTotalPages = 500;
+    const calculatedPages = Math.ceil(totalItems / itemsPerPage);
+    this.totalPages = Math.min(calculatedPages, maxTotalPages);
+
     this.currentPage = Math.max(1, Math.min(currentPage, this.totalPages));
     this.render();
   }
