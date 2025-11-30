@@ -156,6 +156,8 @@ class DetailsPage {
 
   renderScenes(movie) {
     const scenesContainer = document.getElementById("movieScenes");
+    const indicatorsContainer = document.getElementById("sceneIndicators");
+
     if (!scenesContainer) return;
 
     let sceneImages = [];
@@ -180,6 +182,143 @@ class DetailsPage {
     `
       )
       .join("");
+
+    if (indicatorsContainer && sceneImages.length > 0) {
+      indicatorsContainer.innerHTML = sceneImages
+        .map(
+          (_, index) =>
+            `<div class="scene-indicator ${
+              index === 0 ? "active" : ""
+            }" data-index="${index}"></div>`
+        )
+        .join("");
+
+      this.setupSceneSlider(scenesContainer, indicatorsContainer);
+    }
+  }
+
+  setupSceneSlider(scenesContainer, indicatorsContainer) {
+    if (window.innerWidth > 768) return;
+
+    const scenes = scenesContainer.children;
+    const indicators = indicatorsContainer.querySelectorAll(".scene-indicator");
+    let currentIndex = 0;
+    let isScrolling = false;
+
+    const scrollToIndex = (index) => {
+      if (index < 0 || index >= scenes.length || isScrolling) return;
+
+      isScrolling = true;
+      currentIndex = index;
+
+      const scrollPosition = currentIndex * scenes[0].offsetWidth;
+
+      scenesContainer.scrollTo({
+        left: scrollPosition,
+        behavior: "smooth",
+      });
+
+      indicators.forEach((indicator, i) => {
+        indicator.classList.toggle("active", i === currentIndex);
+      });
+
+      setTimeout(() => {
+        isScrolling = false;
+      }, 300);
+    };
+
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener("click", () => {
+        scrollToIndex(index);
+      });
+    });
+
+    let scrollTimeout;
+    scenesContainer.addEventListener("scroll", () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        if (isScrolling) return;
+
+        const containerCenter =
+          scenesContainer.scrollLeft + scenesContainer.offsetWidth / 2;
+        let closestIndex = 0;
+        let closestDistance = Infinity;
+
+        Array.from(scenes).forEach((scene, index) => {
+          const sceneCenter = scene.offsetLeft + scene.offsetWidth / 2;
+          const distance = Math.abs(sceneCenter - containerCenter);
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestIndex = index;
+          }
+        });
+
+        if (closestIndex !== currentIndex) {
+          currentIndex = closestIndex;
+          indicators.forEach((indicator, i) => {
+            indicator.classList.toggle("active", i === currentIndex);
+          });
+        }
+      }, 100);
+    });
+
+    scenesContainer.addEventListener("scroll", () => {
+      if (!isScrolling) {
+        const snapPosition = currentIndex * scenes[0].offsetWidth;
+        const diff = Math.abs(scenesContainer.scrollLeft - snapPosition);
+
+        if (diff > scenes[0].offsetWidth * 0.3) {
+          scenesContainer.scrollTo({
+            left: snapPosition,
+            behavior: "smooth",
+          });
+        }
+      }
+    });
+
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    const handleTouchStart = (e) => {
+      startX = e.touches[0].clientX;
+      startScrollLeft = scenesContainer.scrollLeft;
+    };
+
+    const handleTouchMove = (e) => {
+      if (!startX) return;
+
+      const currentX = e.touches[0].clientX;
+      const diff = startX - currentX;
+
+      scenesContainer.scrollLeft = startScrollLeft + diff;
+    };
+
+    const handleTouchEnd = (e) => {
+      if (!startX) return;
+
+      const endX = e.changedTouches[0].clientX;
+      const diff = startX - endX;
+      const threshold = 50;
+
+      if (Math.abs(diff) > threshold) {
+        if (diff > 0 && currentIndex < scenes.length - 1) {
+          scrollToIndex(currentIndex + 1);
+        } else if (diff < 0 && currentIndex > 0) {
+          scrollToIndex(currentIndex - 1);
+        } else {
+          scrollToIndex(currentIndex);
+        }
+      } else {
+        scrollToIndex(currentIndex);
+      }
+
+      startX = 0;
+    };
+
+    scenesContainer.addEventListener("touchstart", handleTouchStart);
+    scenesContainer.addEventListener("touchmove", handleTouchMove);
+    scenesContainer.addEventListener("touchend", handleTouchEnd);
   }
 
   renderCast(cast) {
