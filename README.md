@@ -172,9 +172,7 @@ This project fetches:
 
 ### **CSS Architecture**
 - CSS Variables for theming  
-- `@layer`-based organization  
-- BEM-inspired naming  
-- Mobile-first responsive design  
+- `@layer`-based organization   
 
 ---
 
