@@ -1,7 +1,6 @@
 import { MovieGrid } from "./components/MovieGrid.js";
 import { Pagination } from "./components/Pagination.js";
 import { TMDbService } from "./api/tmdbService.js";
-import { SearchHandler } from "./components/SearchHandler.js";
 
 class GenrePage {
   constructor() {
@@ -11,11 +10,8 @@ class GenrePage {
     this.genreId = this.getGenreIdFromURL();
     this.genreName = this.getGenreNameFromURL();
     this.currentPage = 1;
+    this.genres = [];
 
-    console.log("GenrePage initialized:", {
-      genreId: this.genreId,
-      genreName: this.genreName,
-    });
     this.init();
   }
 
@@ -31,18 +27,17 @@ class GenrePage {
 
   async init() {
     if (!this.genreId) {
-      console.error("No genre ID found in URL");
       this.showError("Genre not specified");
       return;
     }
 
-    console.log("Starting initialization...");
     this.updatePageTitle();
     await this.loadGenres();
     await this.loadGenreMovies(1);
     this.setupPagination();
-    this.setupSearchHandler();
+    this.setupEventListeners();
     this.setupGenresDropdown();
+    this.renderPopularGenresCarousel();
   }
 
   updatePageTitle() {
@@ -54,30 +49,21 @@ class GenrePage {
 
   async loadGenres() {
     try {
-      console.log("Loading genres...");
-      const genres = await this.tmdbService.getGenres();
-      console.log("Genres loaded:", genres);
-      this.renderGenreSidebar(genres);
-    } catch (error) {
-      console.error("Failed to load genres:", error);
-    }
+      this.genres = await this.tmdbService.getGenres();
+      this.renderGenreSidebar();
+    } catch (error) {}
   }
 
-  renderGenreSidebar(genres) {
+  renderGenreSidebar() {
     const sidebar = document.querySelector(".genre-list-container");
-    if (!sidebar) {
-      console.error("Genre sidebar container not found");
-      return;
-    }
-
-    console.log("Rendering genre sidebar with", genres.length, "genres");
+    if (!sidebar) return;
 
     let currentGenreId = this.genreId;
     if (isNaN(this.genreId)) {
       currentGenreId = this.tmdbService.getGenreIdByName(this.genreName);
     }
 
-    sidebar.innerHTML = genres
+    sidebar.innerHTML = this.genres
       .map((genre) => {
         const isActive = genre.id.toString() === currentGenreId?.toString();
         return `
@@ -97,23 +83,70 @@ class GenrePage {
     this.setupGenreClickHandlers();
   }
 
+  renderPopularGenresCarousel() {
+    const carousel = document.getElementById("popularGenresCarousel");
+    if (!carousel) return;
+
+    const popularGenres = this.genres.slice(0, 8);
+    carousel.innerHTML = popularGenres
+      .map((genre) => {
+        const isActive = genre.id.toString() === this.genreId?.toString();
+        return `
+        <div class="genre-carousel-item ${isActive ? "active" : ""}" 
+             data-genre-id="${genre.id}" 
+             data-genre-name="${genre.name}">
+          ${genre.name}
+        </div>
+      `;
+      })
+      .join("");
+
+    this.setupCarouselClickHandlers();
+  }
+
+  setupCarouselClickHandlers() {
+    const carouselItems = document.querySelectorAll(".genre-carousel-item");
+    carouselItems.forEach((item) => {
+      item.addEventListener("click", () => {
+        const genreId = item.dataset.genreId;
+        const genreName = item.dataset.genreName;
+
+        carouselItems.forEach((i) => i.classList.remove("active"));
+        item.classList.add("active");
+
+        this.genreId = genreId;
+        this.genreName = genreName;
+        this.updatePageTitle();
+        this.loadGenreMovies(1);
+
+        const sidebarItems = document.querySelectorAll(".genre-list-item");
+        sidebarItems.forEach((i) => {
+          i.classList.toggle("active", i.dataset.genreId === genreId);
+        });
+
+        window.history.pushState(
+          {},
+          "",
+          `?id=${genreId}&name=${encodeURIComponent(genreName)}`
+        );
+      });
+    });
+  }
+
   setupGenreClickHandlers() {
     const genreItems = document.querySelectorAll(".genre-list-item");
-    console.log(
-      "Setting up click handlers for",
-      genreItems.length,
-      "genre items"
-    );
-
     genreItems.forEach((item) => {
       item.addEventListener("click", () => {
         const genreId = item.dataset.genreId;
         const genreName = item.dataset.genreName;
 
-        console.log("Genre clicked:", { genreId, genreName });
-
         genreItems.forEach((i) => i.classList.remove("active"));
         item.classList.add("active");
+
+        const carouselItems = document.querySelectorAll(".genre-carousel-item");
+        carouselItems.forEach((i) => {
+          i.classList.toggle("active", i.dataset.genreId === genreId);
+        });
 
         this.genreId = genreId;
         this.genreName = genreName;
@@ -131,12 +164,6 @@ class GenrePage {
 
   async loadGenreMovies(page = 1) {
     try {
-      console.log(
-        "Loading genre movies for genreId:",
-        this.genreId,
-        "page:",
-        page
-      );
       this.showLoading();
       this.currentPage = page;
 
@@ -144,7 +171,6 @@ class GenrePage {
         this.genreId,
         page
       );
-      console.log("Movies loaded:", result);
 
       document.getElementById(
         "resultsCount"
@@ -154,49 +180,22 @@ class GenrePage {
       this.movieGrid.renderMovies(result.movies);
       this.pagination.update(result.totalResults, 20, page);
     } catch (error) {
-      console.error("Failed to load genre movies:", error);
-      this.showError("Failed to load genre movies: " + error.message);
+      this.showError("Failed to load genre movies");
     }
+  }
+
+  setupEventListeners() {
+    this.setupSearchHandler();
   }
 
   setupSearchHandler() {
     const searchInput = document.querySelector(".search-input");
     const searchButton = document.querySelector(".search-icon-btn");
-
-    if (!searchInput || !searchButton) {
-      console.error("Search elements not found in genre page");
-      return;
-    }
-
-    // ایجاد dropdown container اگر وجود ندارد
-    let searchDropdown = document.querySelector(".search-dropdown");
-    if (!searchDropdown) {
-      searchDropdown = document.createElement("div");
-      searchDropdown.className = "search-dropdown";
-      searchDropdown.innerHTML =
-        '<div class="search-dropdown-content" role="listbox"></div>';
-      document.querySelector(".search-container").appendChild(searchDropdown);
-    }
-
+    const searchDropdown = document.querySelector(".search-dropdown");
     const searchDropdownContent = searchDropdown.querySelector(
       ".search-dropdown-content"
     );
 
-    // اضافه کردن event listeners برای جستجو
-    this.setupSearchEvents(
-      searchInput,
-      searchButton,
-      searchDropdown,
-      searchDropdownContent
-    );
-  }
-
-  setupSearchEvents(
-    searchInput,
-    searchButton,
-    searchDropdown,
-    searchDropdownContent
-  ) {
     let searchDelayTimer = null;
 
     searchInput.addEventListener("input", (e) => {
@@ -255,7 +254,6 @@ class GenrePage {
       const result = await this.tmdbService.searchMovies(query, 1);
       this.renderSearchDropdown(result.movies.slice(0, 10), dropdownContent);
     } catch (error) {
-      console.error("Search dropdown error:", error);
       this.hideSearchDropdown(dropdownContent.parentElement);
     }
   }
@@ -276,18 +274,15 @@ class GenrePage {
           <div class="dropdown-movie-card" 
                data-movie-id="${movie.id}" 
                role="option" 
-               tabindex="0"
-               aria-label="${this.escapeHTML(movie.title)}">
+               tabindex="0">
             <img src="${movie.poster}" alt="${
             movie.title
-          } poster" loading="lazy" onerror="this.src='${this.tmdbService.generatePlaceholder()}'">
+          } poster" loading="lazy">
             <div class="dropdown-movie-info">
-              <h4>${this.escapeHTML(movie.title)}</h4>
+              <h4>${movie.title}</h4>
               ${
                 genresDisplay
-                  ? `<div class="dropdown-movie-genres">${this.escapeHTML(
-                      genresDisplay
-                    )}</div>`
+                  ? `<div class="dropdown-movie-genres">${genresDisplay}</div>`
                   : ""
               }
             </div>
@@ -307,44 +302,16 @@ class GenrePage {
 
   setupPagination() {
     this.pagination.onPageChange = (page) => {
-      console.log("Page changed to:", page);
       this.loadGenreMovies(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
-  }
-
-  showLoading() {
-    const movieList = document.querySelector(".genre-movies-list");
-    if (movieList) {
-      movieList.innerHTML = `
-        <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
-          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
-          <p style="margin-top: 1rem;">Loading movies...</p>
-        </div>
-      `;
-    }
-  }
-
-  showError(message) {
-    const movieList = document.querySelector(".genre-movies-list");
-    if (movieList) {
-      movieList.innerHTML = `
-        <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
-          <p>${message}</p>
-          <button onclick="location.reload()" style="margin-top: 1rem; padding: 8px 16px; background: var(--accent-color); color: #000; border: none; border-radius: 4px; cursor: pointer;">Try Again</button>
-        </div>
-      `;
-    }
   }
 
   async setupGenresDropdown() {
     const genresMenu = document.querySelector(".genres-menu");
     const dropdownBtn = document.querySelector(".dropdown-btn");
 
-    if (!genresMenu || !dropdownBtn) {
-      console.error("Genres dropdown elements not found");
-      return;
-    }
+    if (!genresMenu || !dropdownBtn) return;
 
     try {
       const genres = await this.tmdbService.getGenres();
@@ -379,15 +346,31 @@ class GenrePage {
           dropdownBtn.classList.remove("active");
         }
       });
-    } catch (error) {
-      console.error("Failed to load genres dropdown:", error);
+    } catch (error) {}
+  }
+
+  showLoading() {
+    const movieList = document.querySelector(".genre-movies-list");
+    if (movieList) {
+      movieList.innerHTML = `
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading movies...</p>
+        </div>
+      `;
     }
   }
 
-  escapeHTML(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
+  showError(message) {
+    const movieList = document.querySelector(".genre-movies-list");
+    if (movieList) {
+      movieList.innerHTML = `
+        <div class="error-state">
+          <p>${message}</p>
+          <button onclick="location.reload()">Try Again</button>
+        </div>
+      `;
+    }
   }
 }
 

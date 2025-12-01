@@ -34,6 +34,9 @@
               />
             </svg>
           </button>
+          <div class="search-dropdown">
+            <div class="search-dropdown-content" role="listbox"></div>
+          </div>
         </div>
 
         <div class="dropdown-container genres-dropdown">
@@ -68,9 +71,7 @@
 
       <div class="genre-layout-container">
         <aside class="genre-sidebar">
-          <div class="genre-list-container">
-            <!-- Dynamic content will be loaded here -->
-          </div>
+          <div class="genre-list-container"></div>
         </aside>
 
         <section class="genre-content">
@@ -90,7 +91,6 @@
                       <line x1="7" y1="14" x2="7" y2="6" />
                       <polyline points="4,9 7,6 10,9" />
                     </g>
-
                     <g stroke="#ffffff" stroke-width="1.5" fill="none">
                       <line x1="13" y1="6" x2="13" y2="14" />
                       <polyline points="10,11 13,14 16,11" />
@@ -108,9 +108,13 @@
 
           <div class="genre-divider"></div>
 
+          <div class="popular-genres-carousel">
+            <div class="carousel-container" id="popularGenresCarousel"></div>
+          </div>
+
           <div class="genre-movies-list"></div>
 
-          <nav class="pagination" aria-label="Movie pages"></nav>
+          <nav class="pagination"></nav>
         </section>
       </div>
     </main>

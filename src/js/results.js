@@ -9,10 +9,6 @@ class ResultsPage {
     this.tmdbService = new TMDbService();
     this.searchQuery = this.getSearchQueryFromURL();
     this.currentPage = 1;
-
-    console.log("ResultsPage initialized:", {
-      searchQuery: this.searchQuery,
-    });
     this.init();
   }
 
@@ -27,8 +23,6 @@ class ResultsPage {
       this.showError("No search query specified");
       return;
     }
-
-    console.log("Starting results page initialization...");
     this.updatePageTitle();
     await this.loadSearchResults(1);
     this.setupPagination();
@@ -45,12 +39,6 @@ class ResultsPage {
 
   async loadSearchResults(page = 1) {
     try {
-      console.log(
-        "Loading search results for query:",
-        this.searchQuery,
-        "page:",
-        page
-      );
       this.showLoading();
       this.currentPage = page;
 
@@ -58,7 +46,6 @@ class ResultsPage {
         this.searchQuery,
         page
       );
-      console.log("Search results loaded:", result);
 
       document.getElementById(
         "resultsCount"
@@ -202,7 +189,6 @@ class ResultsPage {
 
   setupPagination() {
     this.pagination.onPageChange = (page) => {
-      console.log("Page changed to:", page);
       this.loadSearchResults(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };

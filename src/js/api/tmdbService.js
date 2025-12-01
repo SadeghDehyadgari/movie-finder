@@ -232,40 +232,42 @@ export class TMDbService {
         (movie) => movie.vote_count >= 50 && movie.vote_average >= 5.0
       );
 
-      const movies = [];
-      for (const movieData of filteredResults) {
+      const moviePromises = filteredResults.map(async (movieData) => {
         try {
-          const [movieDetails, credits] = await Promise.all([
-            this.makeRequest(`movie/${movieData.id}`, {
-              language: "en-US",
-              append_to_response: "release_dates",
-            }),
-            this.getMovieCredits(movieData.id),
-          ]);
+          const movieDetails = await this.makeRequest(`movie/${movieData.id}`, {
+            language: "en-US",
+            append_to_response: "credits,release_dates",
+          });
 
           const director =
-            credits.crew.find((person) => person.job === "Director")?.name ||
-            null;
-          const cast = credits.cast.slice(0, 3).map((actor) => actor.name);
-
+            movieDetails.credits?.crew?.find(
+              (person) => person.job === "Director"
+            )?.name || null;
+          const cast =
+            movieDetails.credits?.cast
+              ?.slice(0, 3)
+              .map((actor) => actor.name) || [];
           const certification = this.extractCertification(
             movieDetails.release_dates
           );
 
-          const movie = this.transformMovieData(
+          return this.transformMovieData(
             { ...movieData, runtime: movieDetails.runtime },
             true,
             director,
             cast,
             certification
           );
-          movies.push(movie);
         } catch (error) {
           console.error(`Failed to process movie ${movieData.id}:`, error);
-          const movie = this.transformMovieData(movieData, true);
-          movies.push(movie);
+          return this.transformMovieData(movieData, true);
         }
-      }
+      });
+
+      const movieResults = await Promise.allSettled(moviePromises);
+      const movies = movieResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
 
       return {
         movies: movies,
